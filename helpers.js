@@ -6,16 +6,6 @@ function createFile(PATH) {
 	}
 }
 
-function parseArgs(options) {
-	const parsedArgs = options.reduce((cum, el, index, arr) => {
-		const [key, value] = el.split('=');
-		cum[key] = value;
-		return cum;
-	}, {});
-
-	return parsedArgs;
-}
-
 function add(PATH, args) {
 	const todoArray = readFile(PATH),
 		lastItem = todoArray[todoArray.length -1],
@@ -25,14 +15,13 @@ function add(PATH, args) {
 	todoArray.push(args);
 
 	writeToFile(PATH, todoArray);
-	console.log(`Task added to the list!`);
 }
 
-function edit(PATH, args) {
+function edit(PATH, id, args) {
 	const todoArray = readFile(PATH);
 
 	const updateTodo = todoArray.map((task) => {
-		if (task.id == args.id) {
+		if (task.id == id) {
 			return { ...task, title: args.title, body: args.body };
 		}
 
@@ -40,73 +29,61 @@ function edit(PATH, args) {
 	});
 
 	writeToFile(PATH, updateTodo);
-	console.log(`Successfully edited the task.`);
 }
 
-function del(PATH, args) {
+function del(PATH, id) {
 	const todoArray = readFile(PATH);
 
 	const updateTodo = todoArray.filter((task) => {
-		return task.id != args.id;
+		return task.id != id;
 	});
 
 	writeToFile(PATH, updateTodo);
-	console.error(`Removed task #${args.id} successfully.`);
 }
 
-function check(PATH, args) {
+function check(PATH, id) {
 	const todoArray = readFile(PATH);
-	let didChange = false;
 
 	const updateTodo = todoArray.map((task) => {
-		if (task.id == args.id && !task.checked) {
+		if (task.id == id && !task.checked) {
 			task.checked = true;
-			didChange = true;
 		}
 
 		return task;
 	})
 
 	writeToFile(PATH, updateTodo);
-
-	let message = didChange ? `Checked task #${args.id} as done.` : `Task already checked`;
-	console.log(message);
 }
 
-function uncheck(PATH, args) {
+function uncheck(PATH, id) {
 	const todoArray = readFile(PATH);
-	let didChange = false;
 
 	const updateTodo = todoArray.map((task) => {
-		if (task.id == args.id && task.checked) {
+		if (task.id == id && task.checked) {
 			task.checked = false;
-			didChange = true;
 		}
 
 		return task;
 	})
 
 	writeToFile(PATH, updateTodo);
-
-	let message = didChange ? `Unchecked task #${args.id}.` : `Task already unchecked`;
-	console.log(message);
 }
 
-function list(PATH, args) {
+function list(PATH, isFIltered, isChecked) {
 	const content = fs.readFileSync(PATH, 'UTF-8'),
 		todoArray = JSON.parse(content, null, 4);
 	let data;
 
-	if (Object.keys(args).length !== 0) {
+	if (isFIltered) {
 		data = todoArray.filter((task) => {
-			let filterBase = args.filter == 'checked' ? true : false;
+			let filterBase = isChecked ? true : false;
 			return task.checked === filterBase;
 		});
 	} else {
 		data = todoArray;
 	}
 
-	console.table(data);
+	return data;
 }
 
 function readFile(PATH) {
@@ -120,5 +97,5 @@ function writeToFile(PATH, content) {
 }
 
 module.exports = {
-	createFile, parseArgs, add, edit, del, check, uncheck, list
+	createFile, add, edit, del, check, uncheck, list
 }

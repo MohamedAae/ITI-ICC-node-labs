@@ -1,39 +1,80 @@
-const helpers = require('./helpers'),
+const express = require('express'),
+	app = express(),
+	port = 3000,
+	helpers = require('./helpers'),
 	PATH = './dataStore.json';
 
-function main(passedArgs) {
-	const [ , , operation, ...options] = passedArgs,
-	optionsObject = helpers.parseArgs(options);
+app.use(express.json())
 
-	helpers.createFile(PATH);
-	switch (operation) {
-		case 'add':
-			helpers.add(PATH, optionsObject);
-			break;
+helpers.createFile(PATH);
 
-		case 'edit':
-			helpers.edit(PATH, optionsObject);
-			break;
+app.post('/todo', (req, res) => {
+	helpers.add(PATH, req.body);
+	res.json({
+		"success": true,
+		"message": "Task added to list"
+	})
+});
 
-		case 'del':
-			helpers.del(PATH, optionsObject);
-			break;
+app.put('/todo/:id', (req, res) => {
+	const id = req.params.id;
+	helpers.edit(PATH, id, req.body);
+	res.json({
+		"success": true,
+		"message": "Successfully edited the task."
+	})
+});
 
-		case 'check':
-			helpers.check(PATH, optionsObject);
-			break;
+app.delete('/todo/:id', (req, res) => {
+	const id = req.params.id;
+	helpers.del(PATH, id);
+	res.json({
+		"success": true,
+		"message": "Removed task successfull."
+	})
+});
 
-		case 'uncheck':
-			helpers.uncheck(PATH, optionsObject);
-			break;
+app.put('/todo/check/:id', (req, res) => {
+	const id = req.params.id;
+	helpers.check(PATH, id);
+	res.json({
+		"success": true,
+		"message": "Checked task as done."
+	})
+});
 
-		case 'list':
-			helpers.list(PATH, optionsObject);
-			break;
+app.put('/todo/uncheck/:id', (req, res) => {
+	const id = req.params.id;
+	helpers.uncheck(PATH, id);
+	res.json({
+		"success": true,
+		"message": "Unchecked task as done."
+	})
+});
 
-		default:
-			break;
+app.get('/todo', (req, res) => {
+	const isFilter = req.headers.filter;
+	let data;
+	if (isFilter) {
+		const isChecked = isFilter == 'checked' ? true : false;
+		data = helpers.list(PATH, true, isChecked);
+	} else {
+		data = helpers.list(PATH, false);
 	}
-}
 
-main(process.argv);
+	const response = {
+		"success": true,
+		"filter": false,
+		"todos": data
+	}
+
+	if ( isFilter ) {
+		response.filter = isFilter;
+	}
+
+	res.json(response)
+});
+
+app.listen(port, () => {
+	console.log(`Server is up at localhost:${port}`)
+})
