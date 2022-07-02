@@ -1,8 +1,10 @@
 const fs = require('fs');
+const { resolve } = require('path');
 
 function createFile(PATH) {
 	if (!fs.existsSync(PATH)) {
-		fs.writeFileSync(PATH, "[]");
+		// fs.writeFileSync(PATH, "[]");
+		writeToFile(PATH, "[]");
 	}
 }
 
@@ -116,7 +118,12 @@ function readFile(PATH) {
 
 function writeToFile(PATH, content) {
 	const todo = JSON.stringify(content, null, 4);
-	fs.writeFileSync(PATH, todo);
+	return new Promise((resolve, reject) => {
+		fs.writeFileSync(PATH, todo, err => {
+			if(!err) return resolve(true);
+			reject(err);
+		});
+	});
 }
 
 module.exports = {
