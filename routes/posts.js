@@ -2,97 +2,80 @@ const express   = require("express"),
 	route       = express.Router(),
 	PostModel   = require('../models/Post');
 
-route.get("/", (req, res) => {
-	PostModel.find({})
-		.populate("author")
-		.exec((err, posts) => {
-			if (!err) return res.json(posts);
-
-			console.log(err);
-			res.status(200).json({
-				success: false,
-				message: "DB error!",
-			});
-		});
-});
-
-route.get("/:id", (req, res) => {
-	const id = req.params.id;
-	PostModel.find({ _id: id })
-		.populate("author")
-		.exec((err, user) => {
-		if (!err) return res.json(user);
-
-		console.log(err);
+route.get("/", async (req, res) => {
+	try {
+		const posts = await PostModel.find({}).populate("author");
+		res.json(posts);
+	} catch(err) {
 		res.status(200).json({
 			success: false,
 			message: "DB error!",
 		});
-	});
+	}
 });
 
-route.post("/", (req, res) => {
+route.get("/:id", async (req, res) => {
+	const id = req.params.id;
+
+	try {
+		const user = await PostModel.find({ _id: id }).populate("author");
+		res.json(user)
+	} catch(err) {
+		res.status(200).json({
+				success: false,
+				message: "DB error!",
+		});
+	}
+});
+
+route.post("/", async (req, res) => {
 	const postData = req.body,
 		post       = new PostModel(postData);
 
-	post.save((err, saved) => {
-		if(!err) return res.json(saved);
-
-		console.log(err);
+	try {
+		const saved = await post.save();
+		res.json(saved);
+	} catch(err) {
 		res.status(200).json({
 			success: false,
 			message: "DB error!",
 		});
-	});
+	}
 });
 
-route.get("/:id", (req, res, next) => {
+route.patch("/:id", async (req, res) => {
 	const id = req.params.id;
-	PostModel.find({ _id: id }, (err, post) => {
-		if (!err) return res.json(post);
+	update = req.body;
 
-		console.log(err);
-		res.status(200).json({
-			success: false,
-			message: "DB error!",
+	try {
+		const updated = await PostModel.findOneAndUpdate({ _id: id }, update);
+		res.json({
+			success: true,
+			id: id,
+			message: "Successfuly updated the post details.",
 		});
-	});
+	} catch(err) {
+		res.json({
+			success: false,
+			id: id,
+			message: "Error while updating.",
+		});
+	}
 });
 
-route.patch("/:id", (req, res, next) => {
+route.delete("/:id", async (req, res) => {
 	const id = req.params.id;
-		update = req.body;
-	PostModel.findOneAndUpdate({ _id: id }, update , (err) => {
-		if (!err) {
-			return res.json({
-				success: true,
-				id: id,
-				message: "Successfuly updated the post details.",
-			});
-		}
 
-		console.log(err);
+	try {
+		const deleted = await PostModel.deleteOne({ _id: id });
+		deleted = { success: true, id: id, ...deleted };
+		return res.json(deleted);
+	} catch(err) {
 		res.status(200).json({
 			success: false,
 			message: "DB error!",
 		});
-	});
-});
-
-route.delete("/:id", (req, res, next) => {
-	const id = req.params.id;
-	PostModel.deleteOne({ _id: id }, (err, post) => {
-		if (!err) {
-			post = { success: true, id: id, ...post };
-			return res.json(post);
-		};
-
-		console.log(err);
-		res.status(200).json({
-			success: false,
-			message: "DB error!",
-		});
-	});
+	}
 });
 
 module.exports = route;
