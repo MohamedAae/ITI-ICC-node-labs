@@ -1,80 +1,24 @@
-const express = require('express'),
-	app = express(),
-	port = 3000,
-	helpers = require('./helpers'),
-	PATH = './dataStore.json';
+const express  = require("express"),
+      app      = express(),
+      port     = 3000,
+      mongoose = require("mongoose"),
+      morgan   = require('morgan'),
+      atlasURI =
+		"mongodb+srv://mohamed:TS3LoyY4gInYhk1l@cluster0.ubp4c.mongodb.net/itiDB";
+      users    = require('./routes/users'),
+      posts    = require("./routes/posts");
 
-app.use(express.json())
 
-helpers.createFile(PATH);
-
-app.post('/todo', (req, res) => {
-	helpers.add(PATH, req.body);
-	res.json({
-		"success": true,
-		"message": "Task added to list"
-	})
+mongoose.connect(atlasURI, (err) => {
+	if (!err) return console.log(`Connected to Atlas DB.`);
+	console.error(err);
 });
 
-app.put('/todo/:id', (req, res) => {
-	const id = req.params.id;
-	helpers.edit(PATH, id, req.body);
-	res.json({
-		"success": true,
-		"message": "Successfully edited the task."
-	})
-});
-
-app.delete('/todo/:id', (req, res) => {
-	const id = req.params.id;
-	helpers.del(PATH, id);
-	res.json({
-		"success": true,
-		"message": "Removed task successfull."
-	})
-});
-
-app.put('/todo/check/:id', (req, res) => {
-	const id = req.params.id;
-	helpers.check(PATH, id);
-	res.json({
-		"success": true,
-		"message": "Checked task as done."
-	})
-});
-
-app.put('/todo/uncheck/:id', (req, res) => {
-	const id = req.params.id;
-	helpers.uncheck(PATH, id);
-	res.json({
-		"success": true,
-		"message": "Unchecked task as done."
-	})
-});
-
-app.get('/todo', (req, res) => {
-	const isFilter = req.headers.filter;
-	let data;
-	if (isFilter) {
-		const isChecked = isFilter == 'checked' ? true : false;
-		data = helpers.list(PATH, true, isChecked);
-	} else {
-		data = helpers.list(PATH, false);
-	}
-
-	const response = {
-		"success": true,
-		"filter": false,
-		"todos": data
-	}
-
-	if ( isFilter ) {
-		response.filter = isFilter;
-	}
-
-	res.json(response)
-});
+app.use(express.json());
+app.use(morgan("dev"));
+app.use('/user', users);
+app.use("/post", posts);
 
 app.listen(port, () => {
-	console.log(`Server is up at localhost:${port}`)
-})
+	console.log(`Server is up at localhost:${port}`);
+});
