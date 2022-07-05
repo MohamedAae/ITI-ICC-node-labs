@@ -1,13 +1,15 @@
-const express  = require("express"),
-      app      = express(),
-      port     = 3000,
-      mongoose = require("mongoose"),
-      morgan   = require('morgan'),
-      atlasURI =
-		"mongodb+srv://mohamed:TS3LoyY4gInYhk1l@cluster0.ubp4c.mongodb.net/itiDB";
-      users    = require('./routes/users'),
-      posts    = require("./routes/posts");
+require("dotenv").config();
 
+const express = require("express"),
+	app = express(),
+	port = 3000,
+	mongoose = require("mongoose"),
+	morgan = require("morgan"),
+	atlasURI =
+		"mongodb+srv://mohamed:TS3LoyY4gInYhk1l@cluster0.ubp4c.mongodb.net/itiDB",
+	auth = require("./middleware/auth"),
+	users = require("./routes/users"),
+	posts = require("./routes/posts");
 
 mongoose.connect(atlasURI, (err) => {
 	if (!err) return console.log(`Connected to Atlas DB.`);
@@ -16,8 +18,8 @@ mongoose.connect(atlasURI, (err) => {
 
 app.use(express.json());
 app.use(morgan("dev"));
-app.use('/user', users);
-app.use("/post", posts);
+app.use("/user", users);
+app.use("/post", auth, posts);
 
 app.listen(port, () => {
 	console.log(`Server is up at localhost:${port}`);
